@@ -18,6 +18,8 @@ import {
   IconAlertCircle,
   IconArrowRight,
 } from "@tabler/icons-react";
+import { uploadCV } from "../actions/upload-cv";
+import { ResultsSection } from "./results-section";
 
 const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
   if (!value || (Array.isArray(value) && value.length === 0)) {
@@ -53,21 +55,38 @@ export function UploadFilesForm() {
   const [processStatus, setProcessStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+  const [results, setResults] = useState<any[]>([]);
 
   const handleClear = () => {
     setFiles([]);
     setIsLoading(false);
     setProcessStatus("idle");
+    setResults([]);
   };
 
-  const processFiles = () => {
+  const processFiles = async () => {
+    if (files.length === 0) return;
+
     setIsLoading(true);
 
-    // Simulate processing delay
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append("files", file));
+
+      const response = await uploadCV(formData);
+
+      if (response.success) {
+        setResults(response.results);
+        setProcessStatus("success");
+      } else {
+        setProcessStatus("error");
+      }
+    } catch (error) {
+      console.error("Error processing files:", error);
+      setProcessStatus("error");
+    } finally {
       setIsLoading(false);
-      setProcessStatus("success");
-    }, 2000);
+    }
   };
 
   return (
@@ -145,6 +164,23 @@ export function UploadFilesForm() {
                 </Text>
               </div>
             )}
+
+            {processStatus === "success" &&
+              !isLoading &&
+              results.length > 0 && (
+                <div className="mt-10">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                      Extracted Results
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      We've analyzed your CVs and extracted the following
+                      information.
+                    </p>
+                  </div>
+                  <ResultsSection resultsData={results} />
+                </div>
+              )}
 
             <div className="flex space-x-4 mt-8">
               {files.length > 0 && processStatus === "idle" && !isLoading && (

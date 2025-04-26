@@ -2,7 +2,7 @@ import { UploadFilesForm } from "@/feature/cv-extraction/views/upload-files-form
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex justify-center items-center p-6">
+    <div className="flex flex-col justify-center items-center min-h-[calc(100vh-64px)] w-full bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-6">
       <div className="w-full max-w-6xl">
         <div className="mb-12">
           <div className="text-center mb-12">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import "@mantine/core/styles.css";
 
@@ -8,6 +8,8 @@ import {
   MantineProvider,
   mantineHtmlProps,
 } from "@mantine/core";
+
+import { AppHeader } from "@/components/app-header"; // We'll create this component next
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -24,20 +26,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // <html lang="en">
-    //   <body
-    //     className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-    //   >
-    //     {children}
-    //   </body>
-    // </html>
-
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
       </head>
       <body className={`${plusJakartaSans.className} antialiased`}>
-        <MantineProvider>{children}</MantineProvider>
+        <MantineProvider>
+          <AppHeader />
+          <main>{children}</main>
+        </MantineProvider>
       </body>
     </html>
   );

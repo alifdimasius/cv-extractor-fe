@@ -8,6 +8,7 @@ import {
   Text,
   Box,
   Transition,
+  Alert,
 } from "@mantine/core";
 import { useState } from "react";
 import {
@@ -56,18 +57,21 @@ export function UploadFilesForm() {
     "idle" | "success" | "error"
   >("idle");
   const [results, setResults] = useState<any[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleClear = () => {
     setFiles([]);
     setIsLoading(false);
     setProcessStatus("idle");
     setResults([]);
+    setErrorMessage(null);
   };
 
   const processFiles = async () => {
     if (files.length === 0) return;
 
     setIsLoading(true);
+    setErrorMessage(null);
 
     try {
       const formData = new FormData();
@@ -80,10 +84,16 @@ export function UploadFilesForm() {
         setProcessStatus("success");
       } else {
         setProcessStatus("error");
+        setErrorMessage(
+          response.message || "Failed to process CV files. Please try again."
+        );
       }
     } catch (error) {
       console.error("Error processing files:", error);
       setProcessStatus("error");
+      setErrorMessage(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +152,7 @@ export function UploadFilesForm() {
               <div className="mt-6 flex items-center space-x-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700"></div>
                 <Text size="sm" fw={500} className="text-gray-700">
-                  Processing your files...
+                  Processing your files... This may take a minute.
                 </Text>
               </div>
             )}
@@ -157,30 +167,15 @@ export function UploadFilesForm() {
             )}
 
             {processStatus === "error" && !isLoading && (
-              <div className="mt-6 flex items-center space-x-3 text-red-600">
-                <IconAlertCircle size={18} />
-                <Text size="sm" fw={500}>
-                  There was an error processing your files.
-                </Text>
-              </div>
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Processing Error"
+                color="red"
+                className="mt-6"
+              >
+                {errorMessage || "There was an error processing your files."}
+              </Alert>
             )}
-
-            {processStatus === "success" &&
-              !isLoading &&
-              results.length > 0 && (
-                <div className="mt-10">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-1">
-                      Extracted Results
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      We've analyzed your CVs and extracted the following
-                      information.
-                    </p>
-                  </div>
-                  <ResultsSection resultsData={results} />
-                </div>
-              )}
 
             <div className="flex space-x-4 mt-8">
               {files.length > 0 && processStatus === "idle" && !isLoading && (
@@ -209,6 +204,23 @@ export function UploadFilesForm() {
                 </Button>
               )}
             </div>
+
+            {processStatus === "success" &&
+              !isLoading &&
+              results.length > 0 && (
+                <div className="mt-10">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                      Extracted Results
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      We've analyzed your CVs and extracted the following
+                      information.
+                    </p>
+                  </div>
+                  <ResultsSection resultsData={results} />
+                </div>
+              )}
           </div>
 
           <div className="w-full md:w-1/4 bg-gradient-to-b from-gray-50 to-indigo-50 border-l border-gray-100 p-6 rounded-xl">

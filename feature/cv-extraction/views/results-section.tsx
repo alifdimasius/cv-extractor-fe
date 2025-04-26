@@ -18,15 +18,22 @@ import {
   IconBriefcase,
   IconSchool,
   IconTools,
-  IconCertificate,
-  IconCalendar,
   IconMail,
   IconPhone,
   IconMapPin,
   IconBrandLinkedin,
   IconExternalLink,
+  IconFileDescription,
+  IconWorld,
+  IconCertificate,
+  IconLanguage,
+  IconDeviceLaptop,
+  IconTrophy,
+  IconBook,
+  IconUserCheck,
 } from "@tabler/icons-react";
 
+// Updated type definition based on response from API
 type ResultData = {
   id: string;
   fileName: string;
@@ -37,6 +44,7 @@ type ResultData = {
       phone?: string;
       location?: string;
       linkedin?: string;
+      website?: string;
       summary?: string;
     };
     education?: Array<{
@@ -46,6 +54,8 @@ type ResultData = {
       startDate?: string;
       endDate?: string;
       gpa?: string;
+      description?: string;
+      _id?: string;
     }>;
     experience?: Array<{
       company?: string;
@@ -55,15 +65,59 @@ type ResultData = {
       location?: string;
       description?: string;
       achievements?: string[];
+      _id?: string;
     }>;
     skills?: Array<{
       category?: string;
       skills?: string[];
+      _id?: string;
     }>;
-    [key: string]: any;
+    certifications?: Array<{
+      name?: string;
+      issuer?: string;
+      date?: string;
+      expires?: boolean;
+      expirationDate?: string;
+      _id?: string;
+    }>;
+    languages?: Array<{
+      language?: string;
+      proficiency?: string;
+      _id?: string;
+    }>;
+    projects?: Array<{
+      name?: string;
+      description?: string;
+      startDate?: string;
+      endDate?: string;
+      technologies?: string[];
+      url?: string;
+      _id?: string;
+    }>;
+    publications?: Array<{
+      title?: string;
+      publisher?: string;
+      date?: string;
+      authors?: string[];
+      url?: string;
+      _id?: string;
+    }>;
+    awards?: Array<{
+      title?: string;
+      issuer?: string;
+      date?: string;
+      description?: string;
+      _id?: string;
+    }>;
+    references?: Array<{
+      name?: string;
+      position?: string;
+      company?: string;
+      contact?: string;
+      relationship?: string;
+      _id?: string;
+    }>;
   };
-  confidence: number;
-  processedAt: string;
 };
 
 export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
@@ -84,10 +138,9 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
     }
   };
 
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.9) return "green";
-    if (confidence >= 0.7) return "yellow";
-    return "red";
+  // Function to check if a section has data
+  const hasData = (section?: any[]) => {
+    return section && section.length > 0;
   };
 
   return (
@@ -109,11 +162,12 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
               </Text>
             </div>
             <Badge
-              color={getConfidenceColor(result.confidence)}
+              color="blue"
               variant="light"
               size="lg"
+              leftSection={<IconFileDescription size={14} />}
             >
-              {Math.round(result.confidence * 100)}% Confidence
+              PDF
             </Badge>
           </div>
 
@@ -154,9 +208,6 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
           )}
 
           <Group mt="md">
-            <Text size="xs" color="dimmed">
-              Processed: {new Date(result.processedAt).toLocaleString()}
-            </Text>
             <Button
               variant="light"
               color="blue"
@@ -224,6 +275,14 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
                     </Text>
                   </div>
                 )}
+                {selectedResult.extractedData.personalInfo.website && (
+                  <div className="flex items-center">
+                    <IconWorld size={18} className="text-blue-600 mr-2" />
+                    <Text>
+                      {selectedResult.extractedData.personalInfo.website}
+                    </Text>
+                  </div>
+                )}
               </div>
 
               {/* Summary */}
@@ -241,28 +300,85 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
 
             <Tabs defaultValue="experience" className="mt-4">
               <Tabs.List grow>
-                <Tabs.Tab
-                  value="experience"
-                  leftSection={<IconBriefcase size={16} />}
-                >
-                  Experience
-                </Tabs.Tab>
-                <Tabs.Tab
-                  value="education"
-                  leftSection={<IconSchool size={16} />}
-                >
-                  Education
-                </Tabs.Tab>
-                <Tabs.Tab value="skills" leftSection={<IconTools size={16} />}>
-                  Skills
-                </Tabs.Tab>
+                {hasData(selectedResult.extractedData.experience) && (
+                  <Tabs.Tab
+                    value="experience"
+                    leftSection={<IconBriefcase size={16} />}
+                  >
+                    Experience
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.education) && (
+                  <Tabs.Tab
+                    value="education"
+                    leftSection={<IconSchool size={16} />}
+                  >
+                    Education
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.skills) && (
+                  <Tabs.Tab
+                    value="skills"
+                    leftSection={<IconTools size={16} />}
+                  >
+                    Skills
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.certifications) && (
+                  <Tabs.Tab
+                    value="certifications"
+                    leftSection={<IconCertificate size={16} />}
+                  >
+                    Certifications
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.languages) && (
+                  <Tabs.Tab
+                    value="languages"
+                    leftSection={<IconLanguage size={16} />}
+                  >
+                    Languages
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.projects) && (
+                  <Tabs.Tab
+                    value="projects"
+                    leftSection={<IconDeviceLaptop size={16} />}
+                  >
+                    Projects
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.publications) && (
+                  <Tabs.Tab
+                    value="publications"
+                    leftSection={<IconBook size={16} />}
+                  >
+                    Publications
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.awards) && (
+                  <Tabs.Tab
+                    value="awards"
+                    leftSection={<IconTrophy size={16} />}
+                  >
+                    Awards
+                  </Tabs.Tab>
+                )}
+                {hasData(selectedResult.extractedData.references) && (
+                  <Tabs.Tab
+                    value="references"
+                    leftSection={<IconUserCheck size={16} />}
+                  >
+                    References
+                  </Tabs.Tab>
+                )}
               </Tabs.List>
 
-              <Tabs.Panel value="experience" pt="md">
-                {selectedResult.extractedData.experience &&
-                selectedResult.extractedData.experience.length > 0 ? (
+              {/* Experience Tab */}
+              {hasData(selectedResult.extractedData.experience) && (
+                <Tabs.Panel value="experience" pt="md">
                   <Accordion>
-                    {selectedResult.extractedData.experience.map(
+                    {selectedResult.extractedData.experience?.map(
                       (exp, index) => (
                         <Accordion.Item value={`exp-${index}`} key={index}>
                           <Accordion.Control>
@@ -317,18 +433,14 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
                       )
                     )}
                   </Accordion>
-                ) : (
-                  <Text color="dimmed" className="py-4">
-                    No experience data found
-                  </Text>
-                )}
-              </Tabs.Panel>
+                </Tabs.Panel>
+              )}
 
-              <Tabs.Panel value="education" pt="md">
-                {selectedResult.extractedData.education &&
-                selectedResult.extractedData.education.length > 0 ? (
+              {/* Education Tab */}
+              {hasData(selectedResult.extractedData.education) && (
+                <Tabs.Panel value="education" pt="md">
                   <Accordion>
-                    {selectedResult.extractedData.education.map(
+                    {selectedResult.extractedData.education?.map(
                       (edu, index) => (
                         <Accordion.Item value={`edu-${index}`} key={index}>
                           <Accordion.Control>
@@ -356,21 +468,24 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
                                 <Text size="sm">{edu.gpa}</Text>
                               </Group>
                             )}
+                            {edu.description && (
+                              <Text size="sm" className="mt-2">
+                                {edu.description}
+                              </Text>
+                            )}
                           </Accordion.Panel>
                         </Accordion.Item>
                       )
                     )}
                   </Accordion>
-                ) : (
-                  <Text className="py-4">No education data found</Text>
-                )}
-              </Tabs.Panel>
+                </Tabs.Panel>
+              )}
 
-              <Tabs.Panel value="skills" pt="md">
-                {selectedResult.extractedData.skills &&
-                selectedResult.extractedData.skills.length > 0 ? (
+              {/* Skills Tab */}
+              {hasData(selectedResult.extractedData.skills) && (
+                <Tabs.Panel value="skills" pt="md">
                   <div className="space-y-4">
-                    {selectedResult.extractedData.skills.map(
+                    {selectedResult.extractedData.skills?.map(
                       (skillGroup, index) => (
                         <div key={index} className="bg-gray-50 p-3 rounded">
                           <Text fw={600} className="mb-2">
@@ -387,12 +502,251 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
                       )
                     )}
                   </div>
-                ) : (
-                  <Text color="dimmed" className="py-4">
-                    No skills data found
-                  </Text>
-                )}
-              </Tabs.Panel>
+                </Tabs.Panel>
+              )}
+
+              {/* Certifications Tab */}
+              {hasData(selectedResult.extractedData.certifications) && (
+                <Tabs.Panel value="certifications" pt="md">
+                  <List spacing="md">
+                    {selectedResult.extractedData.certifications?.map(
+                      (cert, index) => (
+                        <List.Item
+                          key={index}
+                          icon={
+                            <IconCertificate
+                              size={18}
+                              className="text-blue-600"
+                            />
+                          }
+                        >
+                          <Text fw={500}>{cert.name}</Text>
+                          {cert.issuer && (
+                            <Text size="sm" color="dimmed">
+                              Issued by {cert.issuer}
+                            </Text>
+                          )}
+                          {cert.date && (
+                            <Text size="sm" color="dimmed">
+                              Date: {formatDate(cert.date)}
+                            </Text>
+                          )}
+                          {cert.expires && cert.expirationDate && (
+                            <Text size="sm" color="dimmed">
+                              Expires: {formatDate(cert.expirationDate)}
+                            </Text>
+                          )}
+                        </List.Item>
+                      )
+                    )}
+                  </List>
+                </Tabs.Panel>
+              )}
+
+              {/* Languages Tab */}
+              {hasData(selectedResult.extractedData.languages) && (
+                <Tabs.Panel value="languages" pt="md">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {selectedResult.extractedData.languages?.map(
+                      (lang, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-50 p-3 rounded flex items-center"
+                        >
+                          <IconLanguage
+                            size={20}
+                            className="text-blue-600 mr-2"
+                          />
+                          <div>
+                            <Text fw={500}>{lang.language}</Text>
+                            {lang.proficiency && (
+                              <Text size="xs" color="dimmed">
+                                {lang.proficiency}
+                              </Text>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </Tabs.Panel>
+              )}
+
+              {/* Projects Tab */}
+              {hasData(selectedResult.extractedData.projects) && (
+                <Tabs.Panel value="projects" pt="md">
+                  <Accordion>
+                    {selectedResult.extractedData.projects?.map(
+                      (project, index) => (
+                        <Accordion.Item value={`project-${index}`} key={index}>
+                          <Accordion.Control>
+                            <div>
+                              <Text fw={600}>{project.name}</Text>
+                              {project.startDate && (
+                                <Text size="sm" color="dimmed">
+                                  {formatDate(project.startDate)}
+                                  {project.endDate &&
+                                    ` - ${formatDate(project.endDate)}`}
+                                </Text>
+                              )}
+                            </div>
+                          </Accordion.Control>
+                          <Accordion.Panel>
+                            {project.description && (
+                              <Text size="sm" className="mb-3">
+                                {project.description}
+                              </Text>
+                            )}
+                            {project.technologies &&
+                              project.technologies.length > 0 && (
+                                <div className="mb-2">
+                                  <Text size="sm" fw={500}>
+                                    Technologies:
+                                  </Text>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {project.technologies.map((tech, i) => (
+                                      <Badge
+                                        key={i}
+                                        size="sm"
+                                        variant="outline"
+                                        color="blue"
+                                      >
+                                        {tech}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            {project.url && (
+                              <div className="flex items-center mt-2">
+                                <IconWorld
+                                  size={14}
+                                  className="text-blue-600 mr-1"
+                                />
+                                <Text size="sm" className="text-blue-600">
+                                  {project.url}
+                                </Text>
+                              </div>
+                            )}
+                          </Accordion.Panel>
+                        </Accordion.Item>
+                      )
+                    )}
+                  </Accordion>
+                </Tabs.Panel>
+              )}
+
+              {/* Publications Tab */}
+              {hasData(selectedResult.extractedData.publications) && (
+                <Tabs.Panel value="publications" pt="md">
+                  <Accordion>
+                    {selectedResult.extractedData.publications?.map(
+                      (pub, index) => (
+                        <Accordion.Item value={`pub-${index}`} key={index}>
+                          <Accordion.Control>
+                            <div>
+                              <Text fw={600}>{pub.title}</Text>
+                              {pub.publisher && (
+                                <Text size="sm" color="dimmed">
+                                  {pub.publisher}{" "}
+                                  {pub.date && `(${formatDate(pub.date)})`}
+                                </Text>
+                              )}
+                            </div>
+                          </Accordion.Control>
+                          <Accordion.Panel>
+                            {pub.authors && pub.authors.length > 0 && (
+                              <Text size="sm" className="mb-2">
+                                <span className="font-medium">Authors:</span>{" "}
+                                {pub.authors.join(", ")}
+                              </Text>
+                            )}
+                            {pub.url && (
+                              <div className="flex items-center mt-2">
+                                <IconWorld
+                                  size={14}
+                                  className="text-blue-600 mr-1"
+                                />
+                                <Text size="sm" className="text-blue-600">
+                                  {pub.url}
+                                </Text>
+                              </div>
+                            )}
+                          </Accordion.Panel>
+                        </Accordion.Item>
+                      )
+                    )}
+                  </Accordion>
+                </Tabs.Panel>
+              )}
+
+              {/* Awards Tab */}
+              {hasData(selectedResult.extractedData.awards) && (
+                <Tabs.Panel value="awards" pt="md">
+                  <List spacing="md">
+                    {selectedResult.extractedData.awards?.map(
+                      (award, index) => (
+                        <List.Item
+                          key={index}
+                          icon={
+                            <IconTrophy size={18} className="text-yellow-600" />
+                          }
+                        >
+                          <Text fw={500}>{award.title}</Text>
+                          <div className="ml-2">
+                            {award.issuer && (
+                              <Text size="sm" color="dimmed">
+                                Issued by {award.issuer}
+                              </Text>
+                            )}
+                            {award.date && (
+                              <Text size="sm" color="dimmed">
+                                Date: {formatDate(award.date)}
+                              </Text>
+                            )}
+                            {award.description && (
+                              <Text size="sm" mt="xs">
+                                {award.description}
+                              </Text>
+                            )}
+                          </div>
+                        </List.Item>
+                      )
+                    )}
+                  </List>
+                </Tabs.Panel>
+              )}
+
+              {/* References Tab */}
+              {hasData(selectedResult.extractedData.references) && (
+                <Tabs.Panel value="references" pt="md">
+                  <div className="grid grid-cols-1 gap-4">
+                    {selectedResult.extractedData.references?.map(
+                      (ref, index) => (
+                        <Card key={index} withBorder>
+                          <Text fw={600}>{ref.name}</Text>
+                          {ref.position && (
+                            <Text size="sm">
+                              {ref.position}{" "}
+                              {ref.company && `at ${ref.company}`}
+                            </Text>
+                          )}
+                          {ref.contact && (
+                            <Text size="sm" className="mt-1">
+                              Contact: {ref.contact}
+                            </Text>
+                          )}
+                          {ref.relationship && (
+                            <Text size="sm" color="dimmed" className="mt-1">
+                              {ref.relationship}
+                            </Text>
+                          )}
+                        </Card>
+                      )
+                    )}
+                  </div>
+                </Tabs.Panel>
+              )}
             </Tabs>
 
             <Divider my="md" />
@@ -401,14 +755,6 @@ export function ResultsSection({ resultsData }: { resultsData: ResultData[] }) {
               <Badge size="lg" variant="filled" color="blue">
                 {selectedResult.fileName}
               </Badge>
-
-              <div className="flex items-center">
-                <IconCalendar size={16} className="text-gray-500 mr-1" />
-                <Text size="sm" color="dimmed">
-                  Processed:{" "}
-                  {new Date(selectedResult.processedAt).toLocaleDateString()}
-                </Text>
-              </div>
             </div>
           </div>
         )}

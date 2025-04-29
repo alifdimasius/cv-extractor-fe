@@ -27,10 +27,15 @@ import {
 import { getCVIds, getCVDetails } from "../actions/get-cv-records";
 import { ResultsSection } from "./results-section";
 
+type CVRecord = {
+  id: string;
+  name: string;
+};
+
 export function ExistingRecordsView() {
   const [loading, setLoading] = useState(true);
-  const [cvIds, setCvIds] = useState<string[]>([]);
-  const [filteredIds, setFilteredIds] = useState<string[]>([]);
+  const [cvRecords, setCvRecords] = useState<CVRecord[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<CVRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedCV, setSelectedCV] = useState<any>(null);
@@ -39,37 +44,37 @@ export function ExistingRecordsView() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Number of IDs to show per page
+  // Number of records to show per page
   const itemsPerPage = 10;
 
-  // Load CV IDs when component mounts
+  // Load CV records when component mounts
   useEffect(() => {
-    loadCVIds();
+    loadCVRecords();
   }, []);
 
-  // Filter IDs when search query changes
+  // Filter records when search query changes
   useEffect(() => {
     if (searchQuery) {
-      setFilteredIds(
-        cvIds.filter((id) =>
-          id.toLowerCase().includes(searchQuery.toLowerCase())
+      setFilteredRecords(
+        cvRecords.filter((record) =>
+          record.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
     } else {
-      setFilteredIds(cvIds);
+      setFilteredRecords(cvRecords);
     }
     setCurrentPage(1); // Reset to first page when filtering
-  }, [searchQuery, cvIds]);
+  }, [searchQuery, cvRecords]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredIds.length / itemsPerPage);
-  const paginatedIds = filteredIds.slice(
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const paginatedRecords = filteredRecords.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Load all available CV IDs
-  const loadCVIds = async () => {
+  // Load all available CV records
+  const loadCVRecords = async () => {
     setLoading(true);
     setError(null);
 
@@ -77,19 +82,30 @@ export function ExistingRecordsView() {
       const result = await getCVIds();
 
       if (result.success) {
-        setCvIds(result.ids);
-        setFilteredIds(result.ids);
+        // Fetch details for each CV to get the name
+        const records = await Promise.all(
+          result.ids.map(async (id) => {
+            const details = await getCVDetails(id);
+            return {
+              id,
+              name: details.success && details.data?.extractedData?.personalInfo?.name || id
+            };
+          })
+        );
+
+        setCvRecords(records);
+        setFilteredRecords(records);
         setRecordCount(result.count || result.ids.length);
       } else {
         setError(result.message);
-        setCvIds([]);
-        setFilteredIds([]);
+        setCvRecords([]);
+        setFilteredRecords([]);
       }
     } catch (error) {
-      console.error("Failed to load CV IDs:", error);
+      console.error("Failed to load CV records:", error);
       setError("Failed to load existing records. Please try again.");
-      setCvIds([]);
-      setFilteredIds([]);
+      setCvRecords([]);
+      setFilteredRecords([]);
     } finally {
       setLoading(false);
     }
@@ -130,7 +146,7 @@ export function ExistingRecordsView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Panel - ID Selection */}
+        {/* Left Panel - Record Selection */}
         <div className="md:col-span-1">
           <Paper shadow="xs" p="md" radius="md" withBorder>
             <div className="mb-4">
@@ -143,7 +159,7 @@ export function ExistingRecordsView() {
               </Group>
 
               <TextInput
-                placeholder="Search by ID"
+                placeholder="Search by name"
                 leftSection={<IconSearch size={16} />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.currentTarget.value)}
@@ -153,7 +169,7 @@ export function ExistingRecordsView() {
               <Button
                 variant="light"
                 color="blue"
-                onClick={loadCVIds}
+                onClick={loadCVRecords}
                 leftSection={<IconRefresh size={16} />}
                 fullWidth
                 className="mb-4"
@@ -171,7 +187,7 @@ export function ExistingRecordsView() {
                     <Skeleton key={i} height={42} radius="sm" />
                   ))}
               </div>
-            ) : error && cvIds.length === 0 ? (
+            ) : error && cvRecords.length === 0 ? (
               <Alert
                 icon={<IconAlertCircle size={16} />}
                 color="red"
@@ -179,20 +195,20 @@ export function ExistingRecordsView() {
               >
                 {error}
               </Alert>
-            ) : paginatedIds.length > 0 ? (
+            ) : paginatedRecords.length > 0 ? (
               <div>
                 <div className="space-y-2 mb-4">
-                  {paginatedIds.map((id) => (
+                  {paginatedRecords.map((record) => (
                     <Button
-                      key={id}
-                      variant={selectedId === id ? "filled" : "outline"}
-                      color={selectedId === id ? "blue" : "gray"}
-                      onClick={() => loadCVDetails(id)}
+                      key={record.id}
+                      variant={selectedId === record.id ? "filled" : "outline"}
+                      color={selectedId === record.id ? "blue" : "gray"}
+                      onClick={() => loadCVDetails(record.id)}
                       fullWidth
                       leftSection={<IconFileDescription size={16} />}
                       className="text-left justify-start truncate"
                     >
-                      <span className="truncate">{id}</span>
+                      <span className="truncate">{record.name}</span>
                     </Button>
                   ))}
                 </div>
@@ -241,7 +257,7 @@ export function ExistingRecordsView() {
             <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border border-gray-200">
               <IconFileDatabase size={48} className="text-gray-400 mb-4" />
               <Text size="lg" fw={500} color="dimmed">
-                Select a CV ID to view details
+                Select a CV to view details
               </Text>
               <Text
                 size="sm"

@@ -88,7 +88,10 @@ export function ExistingRecordsView() {
             const details = await getCVDetails(id);
             return {
               id,
-              name: details.success && details.data?.extractedData?.personalInfo?.name || id
+              name:
+                (details.success &&
+                  details.data?.extractedData?.personalInfo?.name) ||
+                id,
             };
           })
         );

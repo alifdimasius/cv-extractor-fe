@@ -378,6 +378,8 @@ The application is designed to be deployed on Vercel or similar platforms that s
 
 ## API Endpoints Documentation
 
+Generally implement caching for GET API Calls to be efficient
+
 ### CV Endpoints
 
 - **POST /api/cv/extract** - Upload and extract CV data

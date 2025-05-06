@@ -1,7 +1,7 @@
 "use client";
 
 import { Group, Button, Text, Container } from "@mantine/core";
-import { IconUpload, IconDatabase } from "@tabler/icons-react";
+import { IconUpload, IconDatabase, IconBriefcase } from "@tabler/icons-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -43,6 +43,15 @@ export function AppHeader() {
               leftSection={<IconDatabase size={16} />}
             >
               Records
+            </Button>
+            <Button
+              component={Link}
+              href="/jobs"
+              variant={pathname === "/jobs" ? "filled" : "light"}
+              color="blue"
+              leftSection={<IconBriefcase size={16} />}
+            >
+              Jobs
             </Button>
           </Group>
         </div>

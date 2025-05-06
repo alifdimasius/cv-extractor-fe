@@ -8,13 +8,14 @@ import {
   TextInput,
   Group,
   Badge,
-  Loader,
   Alert,
   Title,
   Container,
   Paper,
   Pagination,
   Skeleton,
+  Modal,
+  Tabs,
 } from "@mantine/core";
 import {
   IconSearch,
@@ -26,39 +27,45 @@ import {
   IconCoin,
   IconSchool,
   IconChevronRight,
+  IconPlus,
+  IconEdit,
+  IconUsers,
 } from "@tabler/icons-react";
-import { getJobs } from "../actions/get-jobs";
+import { getJobs, JobData } from "../actions/get-jobs"; // Import JobData type
+import { CreateOrUpdateJobForm } from "./create-or-update-job-form";
+import { MatchingCVsView } from "./matching-cvs-view";
 
-type Job = {
-  _id: string;
-  title: string;
-  company: string;
-  description: string;
-  requirements: string[];
-  skills: string[];
-  responsibilities: string[];
-  location: string;
-  salary: string;
-  jobType: string;
-  industry: string;
-  experienceLevel: string;
-  educationLevel: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+// Helper function to properly type-check the salary object
+function isSalaryObject(
+  salary: any
+): salary is { min: number; max: number; currency: string } {
+  return (
+    typeof salary === "object" &&
+    salary !== null &&
+    "min" in salary &&
+    "max" in salary &&
+    "currency" in salary
+  );
+}
 
 export function JobListingsView() {
   const [loading, setLoading] = useState(true);
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobData[]>([]); // Use JobData type
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJob, setSelectedJob] = useState<JobData | null>(null); // Use JobData type
   const [error, setError] = useState<string | null>(null);
   const [jobCount, setJobCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Modal and form state
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingJob, setEditingJob] = useState<JobData | null>(null); // Use JobData type
+
+  // Add state for active tab
+  const [activeTab, setActiveTab] = useState<string | null>("details");
 
   // Load jobs when component mounts or pagination/search changes
   useEffect(() => {
@@ -107,10 +114,12 @@ export function JobListingsView() {
     }
   };
 
-  // Select a job to display details
-  const selectJob = (job: Job) => {
+  // Select a job to display details and reset to details tab
+  const selectJob = (job: JobData) => {
     setSelectedJobId(job._id);
     setSelectedJob(job);
+    setActiveTab("details"); // Reset to details tab when selecting a new job
+    console.log("Selected job:", job);
   };
 
   // Handle search input
@@ -119,15 +128,42 @@ export function JobListingsView() {
     setCurrentPage(1); // Reset to first page when searching
   };
 
+  // Function to handle job creation completion
+  const handleJobFormSuccess = () => {
+    setIsFormModalOpen(false);
+    setEditingJob(null);
+    loadJobs(); // Refresh the job list
+  };
+
+  // Open the form for creating a new job
+  const openCreateJobForm = () => {
+    setEditingJob(null);
+    setIsFormModalOpen(true);
+  };
+
+  // Open the form for editing an existing job
+  const openEditJobForm = (job: JobData) => {
+    setEditingJob(job);
+    setIsFormModalOpen(true);
+  };
+
   return (
     <Container size="xl" className="py-8">
-      <div className="mb-6">
-        <Title order={2} className="text-gray-800 mb-2">
-          Job Listings
-        </Title>
-        <Text className="text-gray-600">
-          Browse and search through available job positions.
-        </Text>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <Title order={2} className="text-gray-800 mb-2">
+            Job Listings
+          </Title>
+          <Text className="text-gray-600">
+            Browse and search through available job positions.
+          </Text>
+        </div>
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={openCreateJobForm}
+        >
+          Create New Job
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -274,93 +310,128 @@ export function JobListingsView() {
         <div className="md:col-span-2">
           {selectedJob ? (
             <Paper shadow="xs" p="lg" radius="md" withBorder>
-              <div className="mb-6">
-                <Title order={3}>{selectedJob.title}</Title>
-                <Group gap="xs" mb={8}>
-                  <IconBuilding size={16} className="text-gray-500" />
-                  <Text fw={500}>{selectedJob.company}</Text>
-                  <Text color="dimmed">•</Text>
-                  <IconMapPin size={16} className="text-gray-500" />
-                  <Text>{selectedJob.location}</Text>
-                </Group>
-                <Group gap={8}>
-                  <Badge size="lg" variant="light">
-                    {selectedJob.jobType}
-                  </Badge>
-                  <Badge size="lg" variant="light" color="teal">
-                    {selectedJob.experienceLevel}
-                  </Badge>
-                  <Badge size="lg" variant="light" color="violet">
-                    {selectedJob.industry}
-                  </Badge>
-                  <Badge size="lg" variant="light" color="indigo">
-                    <div className="flex items-center">
-                      <IconSchool size={14} className="mr-2" />
-                      {selectedJob.educationLevel}
-                    </div>
-                  </Badge>
-                </Group>
-                {selectedJob.salary && (
-                  <Group gap="xs" mt={12}>
-                    <IconCoin size={16} className="text-gray-700" />
-                    <Text fw={500} className="text-gray-700">
-                      {selectedJob.salary}
-                    </Text>
-                  </Group>
-                )}
-              </div>
-
-              <div className="mb-6">
-                <Title order={5} className="mb-2">
-                  Description
-                </Title>
-                <Text className="whitespace-pre-line">
-                  {selectedJob.description}
-                </Text>
-              </div>
-
-              {selectedJob.requirements?.length > 0 && (
-                <div className="mb-6">
-                  <Title order={5} className="mb-2">
-                    Requirements
-                  </Title>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {selectedJob.requirements.map((req, index) => (
-                      <li key={index}>{req}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selectedJob.responsibilities?.length > 0 && (
-                <div className="mb-6">
-                  <Title order={5} className="mb-2">
-                    Responsibilities
-                  </Title>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {selectedJob.responsibilities.map((resp, index) => (
-                      <li key={index}>{resp}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {selectedJob.skills?.length > 0 && (
+              <Group justify="space-between" mb="md">
                 <div>
-                  <Title
-                    order={5}
-                    className="hover:bg-blue-50 transition-colors mb-2"
-                  >
-                    Required Skills
-                  </Title>
-                  <Group gap="xs">
-                    {selectedJob.skills.map((skill, index) => (
-                      <Badge key={index} size="md">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </Group>
+                  <Title order={3}>{selectedJob.title}</Title>
                 </div>
+                <Button
+                  variant="outline"
+                  leftSection={<IconEdit size={16} />}
+                  onClick={() => openEditJobForm(selectedJob)}
+                >
+                  Edit
+                </Button>
+              </Group>
+
+              <Tabs value={activeTab} onChange={setActiveTab} mb="md">
+                <Tabs.List>
+                  <Tabs.Tab
+                    value="details"
+                    leftSection={<IconBriefcase size={16} />}
+                  >
+                    Job Details
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    value="candidates"
+                    leftSection={<IconUsers size={16} />}
+                  >
+                    Matching Candidates
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs>
+
+              {activeTab === "details" ? (
+                <>
+                  <div className="mb-6">
+                    <Group gap="xs" mb={8}>
+                      <IconBuilding size={16} className="text-gray-500" />
+                      <Text fw={500}>{selectedJob.company}</Text>
+                      <Text color="dimmed">•</Text>
+                      <IconMapPin size={16} className="text-gray-500" />
+                      <Text>{selectedJob.location}</Text>
+                    </Group>
+                    <Group gap={8}>
+                      <Badge size="lg" variant="light">
+                        {selectedJob.jobType}
+                      </Badge>
+                      <Badge size="lg" variant="light" color="teal">
+                        {selectedJob.experienceLevel}
+                      </Badge>
+                      <Badge size="lg" variant="light" color="violet">
+                        {selectedJob.industry}
+                      </Badge>
+                      <Badge size="lg" variant="light" color="indigo">
+                        <div className="flex items-center">
+                          <IconSchool size={14} className="mr-2" />
+                          {selectedJob.educationLevel}
+                        </div>
+                      </Badge>
+                    </Group>
+                    {selectedJob.salary && (
+                      <Group gap="xs" mt={12}>
+                        <IconCoin size={16} className="text-gray-700" />
+                        <Text fw={500} className="text-gray-700">
+                          {typeof selectedJob.salary === "string"
+                            ? selectedJob.salary
+                            : isSalaryObject(selectedJob.salary)}
+                        </Text>
+                      </Group>
+                    )}
+                  </div>
+
+                  <div className="mb-6">
+                    <Title order={5} className="mb-2">
+                      Description
+                    </Title>
+                    <Text className="whitespace-pre-line">
+                      {selectedJob.description}
+                    </Text>
+                  </div>
+
+                  {selectedJob.requirements?.length > 0 && (
+                    <div className="mb-6">
+                      <Title order={5} className="mb-2">
+                        Requirements
+                      </Title>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {selectedJob.requirements.map((req, index) => (
+                          <li key={index}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedJob.responsibilities?.length > 0 && (
+                    <div className="mb-6">
+                      <Title order={5} className="mb-2">
+                        Responsibilities
+                      </Title>
+                      <ul className="list-disc pl-5 space-y-1">
+                        {selectedJob.responsibilities.map((resp, index) => (
+                          <li key={index}>{resp}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedJob.skills?.length > 0 && (
+                    <div>
+                      <Title order={5}>Required Skills</Title>
+                      <Group gap="xs">
+                        {selectedJob.skills.map((skill, index) => (
+                          <Badge key={index} size="md">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </Group>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <MatchingCVsView
+                  jobId={selectedJob._id}
+                  jobTitle={selectedJob.title}
+                />
               )}
             </Paper>
           ) : (
@@ -381,6 +452,20 @@ export function JobListingsView() {
           )}
         </div>
       </div>
+
+      {/* Modal for Create/Edit Job Form */}
+      <Modal
+        opened={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        title={editingJob ? "Edit Job" : "Create New Job"}
+        size="xl"
+        centered
+      >
+        <CreateOrUpdateJobForm
+          jobData={editingJob || undefined}
+          onSuccess={handleJobFormSuccess}
+        />
+      </Modal>
     </Container>
   );
 }

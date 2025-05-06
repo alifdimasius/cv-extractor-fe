@@ -36,7 +36,7 @@ The main functionality includes:
 
 - **Framework**: Next.js 15.3.1
 - **UI Library**: React 19.1.0
-- **Component Library**: Mantine 7.17.5
+- **Component Library**: Mantine 7.17.7
 - **CSS Utilities**: TailwindCSS 4.1.4
 - **Package Manager**: pnpm
 - **Type System**: TypeScript
@@ -212,7 +212,7 @@ All API responses follow a standard format:
 
 ## UI Component Library
 
-The application uses Mantine UI library (v8) with Tabler Icons for a consistent and accessible interface.
+The application uses Mantine UI library (v7.17.7) with Tabler Icons for a consistent and accessible interface.
 
 ### Key Mantine Components Used
 
@@ -307,7 +307,13 @@ type JobData = {
   skills: string[];
   responsibilities: string[];
   location: string;
-  salary: string;
+  salary:
+    | string
+    | {
+        min: number;
+        max: number;
+        currency: string;
+      };
   jobType: string;
   industry: string;
   experienceLevel: string;

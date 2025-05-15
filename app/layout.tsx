@@ -10,6 +10,7 @@ import {
   MantineProvider,
   mantineHtmlProps,
 } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 
 import { AppHeader } from "@/components/app-header"; // We'll create this component next
 
@@ -34,6 +35,7 @@ export default function RootLayout({
       </head>
       <body className={`${plusJakartaSans.className} antialiased`}>
         <MantineProvider>
+          <Notifications />
           <AppHeader />
           <main>{children}</main>
         </MantineProvider>

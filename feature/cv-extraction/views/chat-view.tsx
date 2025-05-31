@@ -58,7 +58,13 @@ export function ChatView() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [deletingHistory, setDeletingHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load chat history on component mount
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -67,6 +73,43 @@ export function ChatView() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const loadChatHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const response = await fetch("https://cvextractor.soljum.com/api/cv/chat/history");
+      const data = await response.json();
+      
+      if (data.success) {
+        // Reverse the history since BE returns latest first, but we want chronological order
+        const reversedHistory = [...data.data.history].reverse();
+        
+        // Convert history to messages
+        const historyMessages = reversedHistory.flatMap((item: any) => [
+          {
+            role: "user" as const,
+            content: item.message,
+            timestamp: item.createdAt,
+          },
+          {
+            role: "assistant" as const,
+            content: item.response,
+            timestamp: item.createdAt,
+          },
+        ]);
+        setMessages(historyMessages);
+      }
+    } catch (error) {
+      console.error("Failed to load chat history:", error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to load chat history",
+        color: "red",
+      });
+    } finally {
+      setLoadingHistory(false);
+    }
   };
 
   const deleteChatHistory = async () => {
